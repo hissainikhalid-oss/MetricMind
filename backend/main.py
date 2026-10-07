@@ -6,11 +6,12 @@ try:
     from .query_engine import QueryEngine
     from .analysis_engine import AnalysisEngine
     from .semantic_engine import SemanticEngine
+    from .audit_service import AuditService
 except ImportError:
     from query_engine import QueryEngine
     from analysis_engine import AnalysisEngine
     from semantic_engine import SemanticEngine
-
+    from audit_service import AuditService
 
 # ---------------------------------------------------------
 # Application
@@ -46,6 +47,7 @@ app.add_middleware(
 query_engine = QueryEngine()
 analysis_engine = AnalysisEngine()
 semantic_engine = SemanticEngine()
+audit_service = AuditService()
 
 
 # ---------------------------------------------------------
@@ -214,7 +216,24 @@ def root_cause_analysis(
             detail=str(exc)
         )
 
+@app.get("/api/audit")
+def get_audit_history(
+    limit: int = 50
+):
 
+    limit = max(
+        1,
+        min(limit, 200)
+    )
+
+    history = audit_service.get_history(
+        limit
+    )
+
+    return {
+        "count": len(history),
+        "history": history
+    }
 # ---------------------------------------------------------
 # Unified conversational endpoint
 # ---------------------------------------------------------
@@ -247,6 +266,10 @@ def ask_metricmind(
             for word in analysis_words
         )
 
+        # -------------------------------------------------
+        # Root-cause analysis
+        # -------------------------------------------------
+
         if (
             is_analysis
             and "margin" in question
@@ -259,12 +282,41 @@ def ask_metricmind(
                 )
             )
 
+            # Save query to audit history
+            audit_service.log(
+                question=request.question,
+                mode="root_cause_analysis",
+                metric="profit_margin",
+                filters={
+                    "region":
+                        result["region"],
+
+                    "year":
+                        result[
+                            "current_period"
+                        ]["year"],
+
+                    "quarter":
+                        result[
+                            "current_period"
+                        ]["quarter"]
+                },
+                generated_query=(
+                    "Governed period comparison "
+                    "and cost-driver analysis"
+                ),
+                governed=True
+            )
+
             return {
                 "mode": "root_cause_analysis",
                 **result
             }
 
+        # -------------------------------------------------
         # Standard governed BI query
+        # -------------------------------------------------
+
         result = query_engine.ask(
             request.question
         )
@@ -275,6 +327,16 @@ def ask_metricmind(
                 status_code=400,
                 detail=result["error"]
             )
+
+        # Save query to audit history
+        audit_service.log(
+            question=request.question,
+            mode="governed_query",
+            metric=result["metric"],
+            filters=result["filters"],
+            generated_query=result["query"],
+            governed=True
+        )
 
         return {
             "mode": "governed_query",
