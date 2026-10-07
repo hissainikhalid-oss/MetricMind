@@ -1,0 +1,165 @@
+version: 1
+
+model:
+  name: corporate_sales
+  table: sales
+  description: >
+    Governed corporate sales semantic model used by MetricMind
+    for reliable business intelligence queries.
+
+dimensions:
+
+  date:
+    label: Date
+    column: date
+    type: time
+    description: Transaction date.
+
+  year:
+    label: Year
+    column: year
+    type: integer
+    description: Calendar year of the transaction.
+
+  quarter:
+    label: Quarter
+    column: quarter
+    type: string
+    description: Calendar quarter such as Q1, Q2, Q3 or Q4.
+
+  month:
+    label: Month
+    column: month
+    type: string
+    description: Transaction month in YYYY-MM format.
+
+  region:
+    label: Region
+    column: region
+    type: string
+    description: Geographic sales region.
+
+  country:
+    label: Country
+    column: country
+    type: string
+    description: Country where the transaction occurred.
+
+  category:
+    label: Product Category
+    column: category
+    type: string
+    description: Business product category.
+
+  product:
+    label: Product
+    column: product
+    type: string
+    description: Product sold in the transaction.
+
+
+metrics:
+
+  total_revenue:
+    label: Total Revenue
+    expression: "SUM(revenue)"
+    format: currency
+    description: Total revenue generated from sales.
+    aliases:
+      - revenue
+      - sales
+      - total sales
+      - sales revenue
+
+  total_cost:
+    label: Total Cost
+    expression: "SUM(total_cost)"
+    format: currency
+    description: Total combined business cost.
+    aliases:
+      - cost
+      - costs
+      - expenses
+      - total expenses
+
+  total_profit:
+    label: Total Profit
+    expression: "SUM(profit)"
+    format: currency
+    description: Total profit after deducting all recorded costs.
+    aliases:
+      - profit
+      - earnings
+      - net profit
+
+  profit_margin:
+    label: Profit Margin
+    expression: "(SUM(profit) / NULLIF(SUM(revenue), 0)) * 100"
+    format: percentage
+    description: >
+      Governed profit margin calculated as total profit divided
+      by total revenue multiplied by 100.
+    aliases:
+      - margin
+      - profit margin
+      - margin percentage
+
+  material_cost:
+    label: Material Cost
+    expression: "SUM(material_cost)"
+    format: currency
+    description: Total material or product acquisition cost.
+    aliases:
+      - material costs
+      - raw material cost
+
+  shipping_cost:
+    label: Shipping Cost
+    expression: "SUM(shipping_cost)"
+    format: currency
+    description: Total logistics and shipping expenditure.
+    aliases:
+      - shipping
+      - logistics cost
+      - freight cost
+      - delivery cost
+
+  operating_cost:
+    label: Operating Cost
+    expression: "SUM(operating_cost)"
+    format: currency
+    description: Total operational overhead cost.
+    aliases:
+      - operating expense
+      - operational cost
+      - overhead
+
+  total_units:
+    label: Units Sold
+    expression: "SUM(units_sold)"
+    format: integer
+    description: Total number of product units sold.
+    aliases:
+      - units
+      - quantity
+      - quantity sold
+
+  total_orders:
+    label: Total Orders
+    expression: "COUNT(DISTINCT order_id)"
+    format: integer
+    description: Number of distinct customer orders.
+    aliases:
+      - orders
+      - order count
+      - number of orders
+
+  average_order_value:
+    label: Average Order Value
+    expression: "SUM(revenue) / NULLIF(COUNT(DISTINCT order_id), 0)"
+    format: currency
+    description: Average revenue generated per order.
+    aliases:
+      - aov
+      - average order
+      - average sale
