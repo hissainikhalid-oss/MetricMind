@@ -285,6 +285,68 @@ class QueryEngine:
 
         return f"{value:,.2f}"
 
+    # -----------------------------------------------------
+    # Build conversational answer
+    # -----------------------------------------------------
+
+    def build_answer(
+        self,
+        metric_name: str,
+        filters: Dict[str, Any],
+        group_by: Optional[str],
+        results: List[Dict[str, Any]]
+    ) -> str:
+
+        metric = self.semantic.get_metric(
+            metric_name
+        )
+
+        label = metric["label"]
+
+        if group_by:
+
+            if not results:
+                return f"No data was found for {label}."
+
+            top_result = results[0]
+
+            return (
+                f"{top_result['dimension']} has the highest "
+                f"{label.lower()} at "
+                f"{self.format_value(metric_name, top_result['value'])}."
+            )
+
+        if not results:
+            return f"No data was found for {label}."
+
+        value = self.format_value(
+            metric_name,
+            results[0]["value"]
+        )
+
+        context_parts = []
+
+        if "region" in filters:
+            context_parts.append(filters["region"])
+
+        if "quarter" in filters:
+            context_parts.append(filters["quarter"])
+
+        if "year" in filters:
+            context_parts.append(str(filters["year"]))
+
+        if context_parts:
+
+            context = " ".join(
+                str(item)
+                for item in context_parts
+            )
+
+            return (
+                f"{label} for {context} was {value}."
+            )
+
+        return f"{label} was {value}."
 
     # -----------------------------------------------------
     # Natural-language query interface
@@ -354,11 +416,19 @@ class QueryEngine:
                 metric_name
             )
         )
+        answer = self.build_answer(
+            metric_name=metric_name,
+            filters=filters,
+            group_by=group_by,
+            results=results
+        )
 
         return {
             "success": True,
 
             "question": question,
+
+            "answer": answer,
 
             "metric": metric_name,
 
