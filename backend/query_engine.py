@@ -3,6 +3,8 @@ from typing import Dict, Any, Optional, List
 
 from sqlalchemy import text
 
+MAX_GROUP_RESULTS = 20
+
 try:
     from .database import get_engine
     from .semantic_engine import SemanticEngine
@@ -197,6 +199,10 @@ class QueryEngine:
 
             sql += (
                 "\nORDER BY value DESC"
+            )
+
+            sql += (
+                f"\nLIMIT {MAX_GROUP_RESULTS}"
             )
 
         return text(sql), params
@@ -438,7 +444,14 @@ class QueryEngine:
                 governance["definition"]
             ),
 
-            "governed": True,
+           "governed": True,
+
+           "query_governance": {
+               "approved_metric": True,
+               "approved_dimensions": True,
+               "parameterized_filters": True,
+               "max_group_results": MAX_GROUP_RESULTS
+            },
 
             "filters": filters,
 
